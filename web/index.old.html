@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html>
+    <head>
+        <title>Document Guessing Game</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="jquery/jquery-2.1.4.js"></script>
+        <script src="jquery/jquery-ui.js"></script>
+        
+        <script>
+            
+            /*
+            $(document).ready(function(){
+                newGame();
+            });            
+            */
+           
+            function newGame() {
+                /*
+                var xmlhttp;
+                if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+                    xmlhttp=new XMLHttpRequest();
+                }
+                else {// code for IE6, IE5
+                    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+                }
+                xmlhttp.onreadystatechange = function() {
+                    if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+                        document.getElementById("gamepanel").innerHTML = xmlhttp.responseText;
+                    }
+                }
+
+                var req = "GameManagerServlet?start=true";
+                xmlhttp.open("POST", req, true);
+                xmlhttp.send();
+                */
+               
+                $.ajax({ url: "GameManagerServlet?start=true",
+                        success: function(result) {
+                           $("#gamepanel").html(result + "<br>");
+                        }});                
+                
+            }
+            
+            function nextTry() {
+                $.ajax({ url: "GameManagerServlet?start=false",
+                        success: function(result) {
+                           $("#gamepanel").append(result).append("<br>");
+                        }});                
+            }
+            
+        </script>
+    </head>
+    <body>
+    <table>
+    <tr>
+    <td>
+    <img src="images/detective.png" alt="ADAPT Centre, DCU"
+         border="0" style="max-width: 100px; max-height:100px;">
+    </td>
+    <td>
+    <h3> Document Guessing Game </h3>
+    </td>
+    </tr>
+    </table>
+    <br>    
+    <input type="button" value="New Game" id="newgame" name="newgame" onclick="newGame()">
+    <input type="button" value="Next Try" id="nexttry" name="nexttry" onclick="nextTry()">
+    <br><br>
+    <div id="gamepanel"></div>    
+    </body>
+</html>

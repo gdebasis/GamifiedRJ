@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+    <servlet>
+        <servlet-name>GameManagerServlet</servlet-name>
+        <servlet-class>servlets.GameManagerServlet</servlet-class>
+        <init-param>
+            <param-name>configFile</param-name>
+            <param-value>C:/research/GamifiedRelJudgements/init.properties</param-value>
+        </init-param>
+    </servlet>
+    <servlet>
+        <servlet-name>SearchServlet</servlet-name>
+        <servlet-class>servlets.SearchServlet</servlet-class>
+        <init-param>
+            <param-name>configFile</param-name>
+            <param-value>C:/research/GamifiedRelJudgements/init.properties</param-value>
+        </init-param>
+    </servlet>
+    <servlet>
+        <servlet-name>DocumentViewer</servlet-name>
+        <servlet-class>servlets.DocumentViewer</servlet-class>
+        <init-param>
+            <param-name>configFile</param-name>
+            <param-value>C:/research/GamifiedRelJudgements/init.properties</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>GameManagerServlet</servlet-name>
+        <url-pattern>/GameManagerServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SearchServlet</servlet-name>
+        <url-pattern>/SearchServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DocumentViewer</servlet-name>
+        <url-pattern>/DocumentViewer</url-pattern>
+    </servlet-mapping>
+    <session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+</web-app>
