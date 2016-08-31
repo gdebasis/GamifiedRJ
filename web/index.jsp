@@ -58,7 +58,7 @@
             //---End: Layout code
             
             function newGame() {
-                $.ajax({ url: "GameManagerServlet?docguessed=none&guessid=-1",
+                $.ajax({ url: "GameManagerServlet?docguessed=none&guessid=-1&score=0",
                         success: function(jsonResponse) {                            
                             var jsonObj = jQuery.parseJSON(jsonResponse);
                             var score = jsonObj.score;

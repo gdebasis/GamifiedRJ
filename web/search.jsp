@@ -57,6 +57,7 @@
            
             function viewDoc() {
                 var id = this.id;
+                var score = this.rev;
                 var docName = this.name;
                 var url = "DocumentViewer?id=" + id;
                 var target = document.getElementById('containerdiv');                
@@ -83,7 +84,7 @@
                                     $.ajax({
                                         url: "GameManagerServlet?docguessed=" + docName +
                                                 "&query=" + $("#query").val() +
-                                                "&guessid=" + id,
+                                                "&guessid=" + id + "&score=" + score,
                                         success: function(jsonResponse) {
                                             var jsonObj = jQuery.parseJSON(jsonResponse);
                                             var score = jsonObj.score;
@@ -99,8 +100,19 @@
                                             
                                             $("#accordion").accordion("option", "active", 2);
                                             
-                                            if (terminate == 2) {
-                                                // TODO: Game ending logic here...
+                                            if (terminate == 4) {
+                                                window.parent.$("#gameTerminationDlg").html(
+                                                        "Doc " + docName + " already submitted. Submit a different one!");
+                                                window.parent.$("#gameTerminationDlg").dialog({
+                                                    modal: true,
+                                                    buttons: {
+                                                      Ok: function() {
+                                                        window.parent.$("#gameTerminationDlg").dialog("close");
+                                                      }
+                                                    }
+                                                });                                                
+                                            }
+                                            else if (terminate == 2) {
                                                 window.parent.$("#gameTerminationDlg").html(
                                                         "Game Over! Your score reached 0...");
                                                 window.parent.$("#gameTerminationDlg").dialog({

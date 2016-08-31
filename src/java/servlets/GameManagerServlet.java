@@ -31,6 +31,7 @@ public class GameManagerServlet extends HttpServlet {
     IndexReader reader;
 
     static final String GAME_INFO_PARAM_NAME = "gameinfo";
+    static final String GAME_MODE_PARAM_NAME = "gamemode"; // game mode of prev game
     
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -45,10 +46,17 @@ public class GameManagerServlet extends HttpServlet {
     }
     
     GameState initiateNewGame(HttpSession session) {
-        session.removeAttribute(GAME_INFO_PARAM_NAME); // terms already shared
-        
-        GameState gameState = new GameState(retriever, rels, session.getId());
+        boolean useTrueRJ = true;
+        Boolean prevGameMode = (Boolean)session.getAttribute(GAME_MODE_PARAM_NAME);
+        if (prevGameMode == null)
+            useTrueRJ = true;
+        else
+            useTrueRJ = !prevGameMode;
+        session.setAttribute(GAME_MODE_PARAM_NAME, useTrueRJ);
+            
+        GameState gameState = new GameState(retriever, rels, session.getId(), useTrueRJ);
         session.setAttribute(GAME_INFO_PARAM_NAME, gameState);
+        
         return gameState;
     }
     
@@ -74,6 +82,11 @@ public class GameManagerServlet extends HttpServlet {
         
         HttpSession session = request.getSession();
         int guessedDocId = Integer.parseInt(request.getParameter("guessid"));
+        float score = 0;
+        String scoreParamVal = request.getParameter("score");
+        if (scoreParamVal != null)
+            score = Float.parseFloat(scoreParamVal);
+        
         String submittedDoc = request.getParameter("docguessed");
         String query = request.getParameter("query");
         if (submittedDoc.equals("none")) {
@@ -85,7 +98,7 @@ public class GameManagerServlet extends HttpServlet {
         if (gameState == null) {
             gameState = initiateNewGame(session);            
         }
-        gameState.update(guessedDocId, submittedDoc, query);
+        gameState.update(guessedDocId, submittedDoc, query, score);
         
         // Construct a JSON response to send out to the client...
         String json = gameState.buildJSON();

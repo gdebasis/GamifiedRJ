@@ -64,6 +64,11 @@ public class SearchServlet extends HttpServlet {
         StringBuffer resultsBuff = new StringBuffer("<ul>");
         IndexSearcher searcher = retriever.getSearcher();
         Analyzer analyzer = retriever.getAnalyzer();
+                
+        float maxSim = 0f; // hits[0].score + 1;
+        for (int i = start; i < end; i++) {
+            maxSim += hits[i].score;
+        }
         
         for (int i = start; i < end; i++) {
             ScoreDoc hit = hits[i];
@@ -74,13 +79,15 @@ public class SearchServlet extends HttpServlet {
             resultsBuff.append("<div class=\"ResultURLStyle\">")
                     .append("<a id=\"")
                     .append(hit.doc)
+                    .append("\" rev=\"")
+                    .append((float)hit.score/maxSim)
                     .append("\" name=\"")
                     .append(docName)
                     .append("\">")
                     .append(docName)
                     .append("</a>")
                     .append("</div>");
-            
+
             resultsBuff.append("<div class=\"ResultSnippetStyle\">");
             TokenStream tokenStream = TokenSources.getTokenStream(
                     searcher.getIndexReader(), hit.doc, FIELD_ANALYZED_CONTENT,

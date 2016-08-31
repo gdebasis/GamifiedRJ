@@ -76,7 +76,9 @@ class UserSubmitInfo {
     String docSubmitted;
     boolean relGuess;
 
-    public UserSubmitInfo(String wordsShared, int luceneDocId, String docSubmitted, boolean relGuess) {
+    public UserSubmitInfo(String wordsShared,
+            int luceneDocId, String docSubmitted,
+            boolean relGuess) {
         this.wordsShared = wordsShared;
         this.docSubmitted = docSubmitted;
         this.luceneDocId = luceneDocId;
@@ -101,14 +103,20 @@ class UserSubmitInfo {
                 .append("</a>");
         }
         
+        buff.append("</td>")
+            .append("<td>");
+        
+        if (luceneDocId >= 0) {
+            buff.append(this.relGuess?"<img src='images/tick.jpg'>" : "<img src='images/cross.jpg'");
+        }
+        
         buff.append("</td>")    
             .append("<td>")    
             .append(wordsShared)
             .append("</td>");
-                
+
         return buff.toString();
-    }
-    
+    }    
 }
 
 public class GameState {
@@ -131,6 +139,7 @@ public class GameState {
     boolean startState;
     int numTermsShared;
     List<UserSubmitInfo> submitInfos;
+    HashMap<String, String> docsSubmitted;
     
     // Instantaneous state variables
     String lastDocumentSubmitted;
@@ -139,6 +148,7 @@ public class GameState {
     String wordsSharedNow; // words just shared
     boolean correctGuess;
     boolean relGuess;
+    boolean usingTrueRJ;
     int terminateCode;
 
     String logFileName;
@@ -150,6 +160,7 @@ public class GameState {
     static final float ONE_MINUS_LAMBDA = 1-LAMBDA;
     
     // Termination Codes
+    static final int DOC_ALREADY_GUESSED = 4;
     static final int GAME_TO_CONTINUE = 0;
     static final int CORRECT_GUESS_FOUND = 1;
     static final int SCORE_REACHED_MIN_THRESH = 2;
@@ -161,7 +172,7 @@ public class GameState {
     static final int SCORE_INCREMENET_FOR_CORRECT_REL = 5;
     static final int SCORE_INCREMENET_FOR_INCORRECT_REL = -2;
         
-    public GameState(TrecDocRetriever retriever, AllRelRcds rels, String sessionId) {
+    public GameState(TrecDocRetriever retriever, AllRelRcds rels, String sessionId, boolean usingTrueRJ) {
         this.sessionId = sessionId;
         this.retriever = retriever;
         this.rels = rels;
@@ -192,7 +203,12 @@ public class GameState {
         
         tfcomp_freq = new TermFreqComparator_Freq();
         submitInfos = new ArrayList<>();
+        docsSubmitted = new HashMap<>();
+        
+        this.usingTrueRJ = usingTrueRJ;
     }
+    
+    public boolean getGameMode() { return usingTrueRJ; }
     
     void loadTfVec() throws Exception {
         
@@ -315,6 +331,8 @@ public class GameState {
         buff
             .append(this.sessionId)
             .append("\t")
+            .append(this.usingTrueRJ)
+            .append("\t")
             .append(this.startingEpochs)
             .append("\t")
             .append(this.qid)
@@ -332,21 +350,39 @@ public class GameState {
                 
         return buff.toString();
     }
+
+    // This function works in two modes. If the game mode uses
+    // true relevance judgments, the function conducts a simple
+    // lookup else it makes a guess based on the normalized
+    // similarity score... U(sim_score)
+    boolean isRelDocGuessed(String qid, String guessedDocName, float retScore) {
+        if (usingTrueRJ)
+            return this.rels.isRel(qid, guessedDocName); // simple table lookup
+        
+        // Uniform Prob.
+        float p = (float)Math.random();
+        return p < retScore;
+    }
     
     // Update the game state based on user move... User
     // submits a document as a guess...
-    public void update(int guessedDocId, String guessedDocName, String query) {
+    public void update(int guessedDocId, String guessedDocName, String query, float retScore) {
         lastUserQuery = query;
         lastDocumentSubmitted = guessedDocName;
         terminateCode = GAME_TO_CONTINUE;
-        
-        if (guessedDocName.equalsIgnoreCase(docIdToGuess)) {
+                
+        if (docsSubmitted.containsKey(guessedDocName)) {
+            // if document already submitted
+            terminateCode = DOC_ALREADY_GUESSED; 
+        }
+        else if (guessedDocName.equalsIgnoreCase(docIdToGuess)) {
             // user guessed correctly...
             correctGuess = true;
+            relGuess = true;
             score += SCORE_INCREMENET_FOR_CORRECT_GUESS;
             terminateCode = CORRECT_GUESS_FOUND;
         }
-        else if (this.rels.isRel(qid, guessedDocName)) {            
+        else if (isRelDocGuessed(qid, guessedDocName, retScore)) {
             // a correct relevant document is guessed
             relGuess = true;
             score += SCORE_INCREMENET_FOR_CORRECT_REL;            
@@ -362,10 +398,11 @@ public class GameState {
         if (score == GAME_TERMINATION_SCORE) {
             terminateCode = SCORE_REACHED_MIN_THRESH;
         }
-        else {
+        else if (terminateCode != DOC_ALREADY_GUESSED) {
             // Got to share words with the player...
             selectWords();
-            submitInfos.add(new UserSubmitInfo(wordsSharedNow, guessedDocId, guessedDocName, relGuess));            
+            submitInfos.add(new UserSubmitInfo(wordsSharedNow, guessedDocId, guessedDocName, relGuess));
+            docsSubmitted.put(guessedDocName, guessedDocName);
         }
         logGameState();
     }
